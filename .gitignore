@@ -1,0 +1,4 @@
+secrets.py
+clientportal.gw/logs/
+__pycache__/
+.idea/
