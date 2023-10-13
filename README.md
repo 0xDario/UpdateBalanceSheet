@@ -16,4 +16,4 @@ Python script that updates account balances utilizing APIs from various stock br
 
 ### Notes: 
 - I'm using Interactive Brokers, Questrade and Wealthsimple Trade, if you aren't utilizing all these brokers you can comment out those function calls in the main() inside main.py
-- The clientportal.gw is developed, released and maintained by Interactive Brokers. None of it's code is my own, all copyright is owned by Interactive Brokers. See https://interactivebrokers.github.io/cpwebapi/ for more information
+- The clientportal.gw is developed, released and maintained by Interactive Brokers. None of it's code is my own, all copyrights for the code in clientportal.gw directory is owned by Interactive Brokers. See https://interactivebrokers.github.io/cpwebapi/ for more information
