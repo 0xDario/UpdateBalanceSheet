@@ -157,7 +157,7 @@ def fetch_wealthsimple_trade_data():
 
 def update_spreadsheet(account_desc, formatted_total):
     # Load the Excel spreadsheet
-    spreadsheet_path = "C:\\Users\\Lupin\\OneDrive\\Documents\\AccountingHelper.xlsx"
+    spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH
     workbook = openpyxl.load_workbook(spreadsheet_path)
     # Select the specific sheet by name
     sheet = workbook['Sheet1']
