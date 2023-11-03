@@ -160,7 +160,7 @@ def update_spreadsheet(account_desc, formatted_total):
     spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH
     workbook = openpyxl.load_workbook(spreadsheet_path)
     # Select the specific sheet by name
-    sheet = workbook['Sheet1']
+    sheet = workbook['Balances']
 
     # Find the matching account in the spreadsheet and update the adjacent cell
     for row_index, row in enumerate(sheet.iter_rows(min_row=2, max_col=sheet.max_column, values_only=True), start=2):
