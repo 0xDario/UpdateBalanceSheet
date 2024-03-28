@@ -12,6 +12,7 @@ Python script that updates account balances utilizing APIs from various stock br
 - IBKR_CASH_ACCOUNT_ID
 - IBKR_RRSP_ACCOUNT_ID
 2. Download the [Interactive Brokers Client Portal Gateway](https://download2.interactivebrokers.com/portal/clientportal.gw.zip)
+3. Install Java [Java Download](https://www.java.com/download/ie_manual.jsp) 
 3. Extract the clientportal.gw.zip into the root of the UpdateBalanceSheet directory
 4. In the root of the UpdateBalanceSheet directory, create a python virtual environment venv and activate it
 ```
