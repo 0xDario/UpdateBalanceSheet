@@ -12,12 +12,18 @@ Python script that updates account balances utilizing APIs from various stock br
 - IBKR_CASH_ACCOUNT_ID
 - IBKR_RRSP_ACCOUNT_ID
 2. Download the [Interactive Brokers Client Portal Gateway](https://download2.interactivebrokers.com/portal/clientportal.gw.zip)
-3. Extract the clientportal.gw.zip
-4. run the following command from the clientportal.gw inside prompt/terminal of your choice (CMD, PowerShell):
+3. Extract the clientportal.gw.zip into the root of the UpdateBalanceSheet directory
+4. In the root of the UpdateBalanceSheet directory, create a python virtual environment venv and activate it
+```
+python -m venv venv
+.\venv\Scripts\activate.ps1
+pip install -r requirements.txt
+```
+5. run the following command from the clientportal.gw inside prompt/terminal of your choice (CMD, PowerShell):
 ```
 bin\run.bat root\conf.yaml
 ```
-5. Open https://localhost:5000 to login to your Interactive Brokers account Authorization the gateway proxy with your account credentials
+6. Open https://localhost:5000 to login to your Interactive Brokers account Authorization the gateway proxy with your account credentials
 
 
 ### Questrade API Setup
