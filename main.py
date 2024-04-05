@@ -1,6 +1,8 @@
 import requests
 from urllib.parse import urlparse
 from decimal import Decimal
+from datetime import datetime
+import pytz
 import secrets
 import urllib3
 import openpyxl
@@ -167,9 +169,20 @@ def update_spreadsheet(account_desc, formatted_total):
         for col_index, cell_value in enumerate(row):
             if cell_value == account_desc:
                 adjacent_col_index = col_index + 2  # Get the column index immediately to the right
+                # get the next colun index immediately to the right
+                adjacent_col_index_2 = col_index + 3
 
                 # Update the cell in the adjacent column
                 sheet.cell(row=row_index, column=adjacent_col_index, value=formatted_total)
+
+                # Get current time in UTC
+                now_utc = datetime.now(pytz.timezone('UTC'))
+
+                # Convert to Eastern Time
+                now_est = now_utc.astimezone(pytz.timezone('US/Eastern'))
+
+                # Format the datetime and update the cell
+                sheet.cell(row=row_index, column=adjacent_col_index_2, value=now_est.strftime("%Y-%m-%d"))
                 break
 
     # Save the updated spreadsheet
