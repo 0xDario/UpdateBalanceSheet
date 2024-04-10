@@ -169,8 +169,8 @@ def update_spreadsheet(account_desc, formatted_total):
         for col_index, cell_value in enumerate(row):
             if cell_value == account_desc:
                 adjacent_col_index = col_index + 2  # Get the column index immediately to the right
-                # get the next colun index immediately to the right
-                adjacent_col_index_2 = col_index + 3
+                adjacent_col_index_Date = col_index + 3 # get the column index for the date
+                adjacent_col_index_Time = col_index + 4 # get the column index for the time
 
                 # Update the cell in the adjacent column
                 sheet.cell(row=row_index, column=adjacent_col_index, value=formatted_total)
@@ -181,8 +181,8 @@ def update_spreadsheet(account_desc, formatted_total):
                 # Convert to Eastern Time
                 now_est = now_utc.astimezone(pytz.timezone('US/Eastern'))
 
-                # Format the datetime and update the cell
-                sheet.cell(row=row_index, column=adjacent_col_index_2, value=now_est.strftime("%Y-%m-%d"))
+                sheet.cell(row=row_index, column=adjacent_col_index_Date, value=now_est.strftime("%Y-%m-%d"))
+                sheet.cell(row=row_index, column=adjacent_col_index_Time, value=now_est.strftime("%I:%M %p"))
                 break
 
     # Save the updated spreadsheet
