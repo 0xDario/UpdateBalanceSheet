@@ -181,8 +181,8 @@ def update_spreadsheet(account_desc, formatted_total):
                 # Convert to Eastern Time
                 now_est = now_utc.astimezone(pytz.timezone('US/Eastern'))
 
-                sheet.cell(row=row_index, column=adjacent_col_index_Date, value=now_est.strftime("%Y-%m-%d"))
-                sheet.cell(row=row_index, column=adjacent_col_index_Time, value=now_est.strftime("%I:%M %p"))
+                sheet.cell(row=row_index, column=adjacent_col_index_Date, value=now_est.strftime('%Y-%m-%d'))
+                sheet.cell(row=row_index, column=adjacent_col_index_Time, value=now_est.strftime('%H:%M:%S'))
                 break
 
     # Save the updated spreadsheet
