@@ -4,6 +4,7 @@ from decimal import Decimal
 from datetime import datetime
 import pytz
 import secrets
+import platform
 import urllib3
 import openpyxl
 from wsimple.api import Wsimple
@@ -14,7 +15,10 @@ TWOPLACES = Decimal(10) ** -2
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # API endpoints
-ib_api_url = "https://localhost:5000/v1/api"
+if platform.system() == 'Darwin':
+    ib_api_url = "https://localhost:5001/v1/api"
+else:
+    ib_api_url = "https://localhost:5000/v1/api"
 
 
 def extract_access_token(url):
@@ -159,7 +163,15 @@ def fetch_wealthsimple_trade_data():
 
 def update_spreadsheet(account_desc, formatted_total):
     # Load the Excel spreadsheet
-    spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH
+    # if macos
+    # spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH_MACOS
+    # if windows
+    # spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH_WINDOWS
+    if platform.system() == 'Darwin':
+        spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH_MACOS
+    else:
+        spreadsheet_path = secrets.ACCOUNT_BALANCE_EXCEL_PATH_WINDOWS
+
     workbook = openpyxl.load_workbook(spreadsheet_path)
     # Select the specific sheet by name
     sheet = workbook['Balances']

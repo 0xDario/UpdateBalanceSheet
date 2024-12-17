@@ -1,5 +1,7 @@
 secrets.py
 clientportal.gw/
+clientportal/
+.DS_Store
 __pycache__/
 .idea/
 venv/
