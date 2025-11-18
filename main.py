@@ -56,8 +56,8 @@ def fetch_interactive_brokers_data():
         for account in ib_portfolio_accounts:
             data = requests.get(f"{ib_api_url}/portfolio/{account['accountId']}/allocation", verify=False).json()
 
-            stk_value = data['assetClass']['long']['STK']
-            cash_value = data['assetClass']['long']['CASH']
+            stk_value = data.get('assetClass', {}).get('long', {}).get('STK', 0)
+            cash_value = data.get('assetClass', {}).get('long', {}).get('CASH', 0)
 
             # Calculate the formatted total
             total_value = stk_value + cash_value
