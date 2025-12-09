@@ -58,9 +58,11 @@ def fetch_interactive_brokers_data():
 
             stk_value = data.get('assetClass', {}).get('long', {}).get('STK', 0)
             cash_value = data.get('assetClass', {}).get('long', {}).get('CASH', 0)
+            opt_value = data.get('assetClass', {}).get('long', {}).get('OPT', 0)
+            fut_value = data.get('assetClass', {}).get('long', {}).get('FUT', 0)
 
             # Calculate the formatted total
-            total_value = stk_value + cash_value
+            total_value = stk_value + cash_value + opt_value + fut_value
 
             # Account description setup
             account_desc = account['desc']
