@@ -208,7 +208,7 @@ def main():
     try:
         fetch_questrade_data()
         fetch_interactive_brokers_data()
-        fetch_wealthsimple_trade_data()
+        # fetch_wealthsimple_trade_data()
         print("All account balances fetched and spreadsheet updated successfully!\n")
 
     except Exception as e:
