@@ -47,6 +47,8 @@ def fetch_qt_portfolio_accounts(access_token, url):
 
 def fetch_ib_portfolio_accounts():
     response = requests.get(f"{ib_api_url}/portfolio/accounts", verify=False)
+    if response.status_code != 200:
+        raise Exception(f"API Error {response.status_code}: {response.text}")
     return response.json()
 
 def fetch_interactive_brokers_data():
@@ -54,7 +56,10 @@ def fetch_interactive_brokers_data():
         print("Fetching Interactive Brokers account balances...\n")
         ib_portfolio_accounts = fetch_ib_portfolio_accounts()
         for account in ib_portfolio_accounts:
-            data = requests.get(f"{ib_api_url}/portfolio/{account['accountId']}/allocation", verify=False).json()
+            resp = requests.get(f"{ib_api_url}/portfolio/{account['accountId']}/allocation", verify=False)
+            if resp.status_code != 200:
+                raise Exception(f"API Error fetching allocation for {account['accountId']}: {resp.status_code} {resp.text}")
+            data = resp.json()
 
             stk_value = data.get('assetClass', {}).get('long', {}).get('STK', 0)
             cash_value = data.get('assetClass', {}).get('long', {}).get('CASH', 0)
@@ -77,7 +82,10 @@ def fetch_interactive_brokers_data():
             update_spreadsheet(account_desc, total_value)
         print("Interactive Brokers account balances fetched and spreadsheet updated successfully!\n")
     except Exception as e:
-        print("An error occurred:", e)
+        print("An error occurred with IBKR:", e)
+        # We don't raise here, we let main continue or handle it gracefully if needed, 
+        # or we keep raise so the script stops. But let's check auth.
+        raise
 
 
 def fetch_questrade_data():
@@ -121,7 +129,8 @@ def fetch_questrade_data():
             print("Failed to obtain access token.")
 
     except Exception as e:
-        print("An error occurred:", e)
+        print("An error occurred with Questrade:", e)
+        raise
 
 
 def get_otp():
@@ -212,7 +221,7 @@ def main():
         print("All account balances fetched and spreadsheet updated successfully!\n")
 
     except Exception as e:
-        print("An error occurred:", e)
+        print(f"Script execution stopped due to an error: {str(e)}")
 
 
 if __name__ == "__main__":
