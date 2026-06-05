@@ -68,7 +68,7 @@ def fetch_qt_portfolio_accounts(access_token, url):
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
-    response = requests.get(f"{url}v1/accounts", headers=headers, verify=False)
+    response = requests.get(f"{url}v1/accounts", headers=headers)
     return response.json()
 
 
@@ -149,8 +149,7 @@ def fetch_questrade_data():
             headers = {
                 "Authorization": f"Bearer {access_token}"
             }
-            data = requests.get(f"{qt_api_url}v1/accounts/{account_number}/balances", headers=headers,
-                                verify=False).json()
+            data = requests.get(f"{qt_api_url}v1/accounts/{account_number}/balances", headers=headers).json()
             account_desc = 'QT ('+account['type']+')'
             for record in data['combinedBalances']:
                 if record['currency'] == 'CAD':
