@@ -1,4 +1,6 @@
 secrets.py
+qt_refresh_token.txt
+qt_refresh_token.txt.tmp
 clientportal.gw/
 clientportal/
 .DS_Store

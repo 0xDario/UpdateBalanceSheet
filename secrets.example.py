@@ -7,8 +7,14 @@ WEALTHIMSPLE_TFSA_ACCOUNT_ID=''
 IBKR_TFSA_ACCOUNT_ID=''
 IBKR_CASH_ACCOUNT_ID=''
 IBKR_RRSP_ACCOUNT_ID=''
-QT_APP_CLIENT_ID=''
-QT_CONSUMER_KEY=''
-QT_REDIRECT_URI=''
+# Questrade now uses a rotating refresh token instead of the interactive OAuth
+# flow, so QT_APP_CLIENT_ID / QT_CONSUMER_KEY / QT_REDIRECT_URI are no longer
+# needed. Generate a refresh token once from the Questrade "My apps" page and
+# paste it in when the script first asks; it is then rotated and stored for you.
+# Optional: override where the refresh token is saved (defaults to
+# qt_refresh_token.txt next to main.py).
+# QT_REFRESH_TOKEN_PATH=''
+# Optional: practice/sandbox accounts must use the practice login host.
+# QT_TOKEN_URL='https://practicelogin.questrade.com/oauth2/token'
 ACCOUNT_BALANCE_EXCEL_PATH_WINDOWS=''
 ACCOUNT_BALANCE_EXCEL_PATH_MACOS=''

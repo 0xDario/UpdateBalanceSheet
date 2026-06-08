@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urlparse
+import os
 from decimal import Decimal
 from datetime import datetime
 import pytz
@@ -21,27 +21,77 @@ else:
     ib_api_url = "https://localhost:5000/v1/api"
 
 
-def extract_access_token(url):
-    fragment = urlparse(url).fragment
-    token_parts = fragment.split("&")
-    token_dict = {part.split("=")[0]: part.split("=")[1] for part in token_parts}
-    access_token = token_dict.get("access_token")
-    return access_token
+# Questrade rotates the refresh token on every refresh (each one is single-use),
+# so we persist the latest refresh token between runs in this file. Override the
+# location by setting QT_REFRESH_TOKEN_PATH in secrets.py.
+QT_REFRESH_TOKEN_PATH = getattr(
+    secrets,
+    "QT_REFRESH_TOKEN_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "qt_refresh_token.txt"),
+)
+
+# Token endpoint. Practice/sandbox accounts must redeem tokens against
+# https://practicelogin.questrade.com/oauth2/token instead; override via secrets.py.
+QT_TOKEN_URL = getattr(
+    secrets, "QT_TOKEN_URL", "https://login.questrade.com/oauth2/token"
+)
 
 
-def extract_api_server(url):
-    fragment = urlparse(url).fragment
-    token_parts = fragment.split("&")
-    token_dict = {part.split("=")[0]: part.split("=")[1] for part in token_parts}
-    api_server = token_dict.get("api_server")
-    return api_server
+def read_qt_refresh_token():
+    try:
+        with open(QT_REFRESH_TOKEN_PATH, "r") as token_file:
+            return token_file.read().strip() or None
+    except FileNotFoundError:
+        return None
 
 
-def fetch_qt_portfolio_accounts(access_token, url):
+def save_qt_refresh_token(refresh_token):
+    # Write atomically (temp file + os.replace) so an interrupted run can't leave a
+    # half-written token that would lock us out and force registering yet another
+    # device. Create the file 0600 so the credential isn't world-readable under a
+    # typical 022 umask, then re-assert 0600 on the final file.
+    tmp_path = QT_REFRESH_TOKEN_PATH + ".tmp"
+    fd = os.open(tmp_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as token_file:
+        token_file.write(refresh_token.strip())
+    os.replace(tmp_path, QT_REFRESH_TOKEN_PATH)
+    try:
+        os.chmod(QT_REFRESH_TOKEN_PATH, 0o600)
+    except OSError:
+        # Best effort: some platforms/filesystems don't support POSIX permissions.
+        pass
+
+
+def refresh_qt_access_token(refresh_token):
+    # Exchange the stored refresh token for a fresh access token. Using this grant
+    # (instead of the interactive authorize flow) reuses a single device
+    # authorization instead of registering a new one on every run. POST with a form
+    # body keeps the token out of the request URL (and out of any logged URL).
+    data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    response = requests.post(QT_TOKEN_URL, data=data)
+    if response.status_code != 200:
+        raise Exception(
+            f"Questrade token refresh failed ({response.status_code}): {response.text}. "
+            f"The refresh token may be expired or already used - generate a new one from "
+            f"the Questrade 'My apps' page and save it to {QT_REFRESH_TOKEN_PATH}."
+        )
+    return response.json()
+
+
+def qt_endpoint(api_server, path):
+    # Questrade's api_server normally ends in "/", but some token responses include
+    # the "/v1" version segment. Normalize both so we never build ".../v1v1/...".
+    base = api_server.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[: -len("/v1")]
+    return f"{base}/v1/{path}"
+
+
+def fetch_qt_portfolio_accounts(access_token, api_server):
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
-    response = requests.get(f"{url}v1/accounts", headers=headers, verify=False)
+    response = requests.get(qt_endpoint(api_server, "accounts"), headers=headers)
     return response.json()
 
 
@@ -90,43 +140,56 @@ def fetch_interactive_brokers_data():
 
 def fetch_questrade_data():
     try:
-        print("Redirect the user to the authorization URL...\n")
+        refresh_token = read_qt_refresh_token()
+        if not refresh_token:
+            # One-time bootstrap: generate a token from the Questrade "My apps"
+            # page (select your app -> generate a new token) and paste it here.
+            # Do this only once - from now on the script rotates it automatically.
+            print(
+                "No saved Questrade refresh token found.\n"
+                "Generate one from the Questrade 'My apps' page (select your app -> "
+                "generate a new token) and paste it below. You only need to do this once.\n"
+            )
+            refresh_token = input("Enter your Questrade refresh token: ").strip()
+            if not refresh_token:
+                raise Exception("No Questrade refresh token provided.")
 
-        auth_params = {
-            "response_type": "token",
-            "client_id": secrets.QT_APP_CLIENT_ID,
-            "redirect_uri": secrets.QT_REDIRECT_URI
-        }
+        print("Refreshing Questrade access token...\n")
+        token_data = refresh_qt_access_token(refresh_token)
 
-        auth_url = "https://login.questrade.com/oauth2/authorize"
-        auth_response = requests.get(auth_url, params=auth_params)
+        # Questrade rotated the refresh token (single-use), so persist the new one
+        # immediately, before any API calls. If saving fails, print it so the user
+        # can store it manually instead of being stranded with a spent token and
+        # forced to register a new device.
+        new_refresh_token = token_data["refresh_token"]
+        try:
+            save_qt_refresh_token(new_refresh_token)
+        except OSError as save_error:
+            print(
+                f"WARNING: could not save the rotated Questrade refresh token to "
+                f"{QT_REFRESH_TOKEN_PATH} ({save_error}).\n"
+                f"Save this value to that file manually or it will be lost and you'll "
+                f"need to generate a new token:\n\n    {new_refresh_token}\n"
+            )
 
-        # Print the URL for user redirection
-        print("Redirect the user to:", auth_response.url)
+        access_token = token_data["access_token"]
+        qt_api_url = token_data["api_server"]
 
-        # After the user is redirected back to the redirect_uri
-        redirected_url = input("Enter the redirected URL after authorization: ")
-        access_token = extract_access_token(redirected_url)
-        qt_api_url = extract_api_server(redirected_url)
-        if access_token:
-            print("Authentication successful. Access token:", access_token)
-            print("\nFetching Questrade account balances...\n")
-            qt_portfolio_accounts = fetch_qt_portfolio_accounts(access_token, qt_api_url)
-            for account in qt_portfolio_accounts['accounts']:
-                account_number = account['number']
-                headers = {
-                    "Authorization": f"Bearer {access_token}"
-                }
-                data = requests.get(f"{qt_api_url}v1/accounts/{account_number}/balances", headers=headers,
-                                    verify=False).json()
-                account_desc = 'QT ('+account['type']+')'
-                for record in data['combinedBalances']:
-                    if record['currency'] == 'CAD':
-                        # Call the update_spreadsheet function to update the spreadsheet
-                        update_spreadsheet(account_desc, record['totalEquity'])
-            print("Questrade account balances fetched and spreadsheet updated successfully!\n")
-        else:
-            print("Failed to obtain access token.")
+        print("Authentication successful.\n")
+        print("Fetching Questrade account balances...\n")
+        qt_portfolio_accounts = fetch_qt_portfolio_accounts(access_token, qt_api_url)
+        for account in qt_portfolio_accounts['accounts']:
+            account_number = account['number']
+            headers = {
+                "Authorization": f"Bearer {access_token}"
+            }
+            data = requests.get(qt_endpoint(qt_api_url, f"accounts/{account_number}/balances"), headers=headers).json()
+            account_desc = 'QT ('+account['type']+')'
+            for record in data['combinedBalances']:
+                if record['currency'] == 'CAD':
+                    # Call the update_spreadsheet function to update the spreadsheet
+                    update_spreadsheet(account_desc, record['totalEquity'])
+        print("Questrade account balances fetched and spreadsheet updated successfully!\n")
 
     except Exception as e:
         print("An error occurred with Questrade:", e)
@@ -217,7 +280,7 @@ def main():
     try:
         fetch_questrade_data()
         fetch_interactive_brokers_data()
-        fetch_wealthsimple_trade_data()
+        # fetch_wealthsimple_trade_data()
         print("All account balances fetched and spreadsheet updated successfully!\n")
 
     except Exception as e:

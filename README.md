@@ -28,10 +28,29 @@ bin\run.bat root\conf.yaml
 
 
 ### Questrade API Setup
-1. register the app in Questrade Apps
-2. set the following env variables in secrets.py to match the REDIRECT_URI and CLIENT_ID set when registering the app
-- QT_REDIRECT_URI
-- QT_APP_CLIENT_ID
+
+Questrade uses a **rotating refresh token**: you authorize once, and on every run
+the script exchanges its stored refresh token for a fresh access token (and a new
+refresh token, which it saves). This reuses a single device authorization instead
+of registering a new one each run.
+
+1. Go to the Questrade **My apps** page and register a personal app (any redirect
+   URI works — it is not used by this flow).
+2. From that app, click **generate a new token** to obtain a **refresh token**.
+   Do this **once** — each manual generation creates a new device authorization.
+3. The first time you run the script it will prompt you to paste that refresh
+   token. It is then saved to `qt_refresh_token.txt` (gitignored) and rotated
+   automatically on every subsequent run — no further prompts.
+
+> If you previously used the old interactive flow, you can safely delete the
+> accumulated device authorizations from the Questrade **My apps** page; this
+> flow keeps just one alive.
+>
+> Optional: set `QT_REFRESH_TOKEN_PATH` in `secrets.py` to store the token
+> somewhere other than the default location next to `main.py`.
+>
+> Practice/sandbox accounts: set `QT_TOKEN_URL='https://practicelogin.questrade.com/oauth2/token'`
+> in `secrets.py` (the default targets the live login host).
 
 
 ### Wealthsimple Trade API Setup
