@@ -48,6 +48,9 @@ of registering a new one each run.
 >
 > Optional: set `QT_REFRESH_TOKEN_PATH` in `secrets.py` to store the token
 > somewhere other than the default location next to `main.py`.
+>
+> Practice/sandbox accounts: set `QT_TOKEN_URL='https://practicelogin.questrade.com/oauth2/token'`
+> in `secrets.py` (the default targets the live login host).
 
 
 ### Wealthsimple Trade API Setup

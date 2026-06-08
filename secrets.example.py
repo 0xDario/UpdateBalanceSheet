@@ -14,5 +14,7 @@ IBKR_RRSP_ACCOUNT_ID=''
 # Optional: override where the refresh token is saved (defaults to
 # qt_refresh_token.txt next to main.py).
 # QT_REFRESH_TOKEN_PATH=''
+# Optional: practice/sandbox accounts must use the practice login host.
+# QT_TOKEN_URL='https://practicelogin.questrade.com/oauth2/token'
 ACCOUNT_BALANCE_EXCEL_PATH_WINDOWS=''
 ACCOUNT_BALANCE_EXCEL_PATH_MACOS=''

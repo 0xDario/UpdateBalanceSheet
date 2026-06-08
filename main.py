@@ -30,6 +30,12 @@ QT_REFRESH_TOKEN_PATH = getattr(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "qt_refresh_token.txt"),
 )
 
+# Token endpoint. Practice/sandbox accounts must redeem tokens against
+# https://practicelogin.questrade.com/oauth2/token instead; override via secrets.py.
+QT_TOKEN_URL = getattr(
+    secrets, "QT_TOKEN_URL", "https://login.questrade.com/oauth2/token"
+)
+
 
 def read_qt_refresh_token():
     try:
@@ -40,21 +46,29 @@ def read_qt_refresh_token():
 
 
 def save_qt_refresh_token(refresh_token):
-    # Write atomically so an interrupted run can't leave a half-written token
-    # that would lock us out and force registering yet another device.
+    # Write atomically (temp file + os.replace) so an interrupted run can't leave a
+    # half-written token that would lock us out and force registering yet another
+    # device. Create the file 0600 so the credential isn't world-readable under a
+    # typical 022 umask, then re-assert 0600 on the final file.
     tmp_path = QT_REFRESH_TOKEN_PATH + ".tmp"
-    with open(tmp_path, "w") as token_file:
+    fd = os.open(tmp_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as token_file:
         token_file.write(refresh_token.strip())
     os.replace(tmp_path, QT_REFRESH_TOKEN_PATH)
+    try:
+        os.chmod(QT_REFRESH_TOKEN_PATH, 0o600)
+    except OSError:
+        # Best effort: some platforms/filesystems don't support POSIX permissions.
+        pass
 
 
 def refresh_qt_access_token(refresh_token):
-    # Exchange the stored refresh token for a fresh access token. Using this
-    # grant (instead of the interactive authorize flow) reuses a single device
-    # authorization instead of registering a new one on every run.
-    token_url = "https://login.questrade.com/oauth2/token"
-    params = {"grant_type": "refresh_token", "refresh_token": refresh_token}
-    response = requests.get(token_url, params=params)
+    # Exchange the stored refresh token for a fresh access token. Using this grant
+    # (instead of the interactive authorize flow) reuses a single device
+    # authorization instead of registering a new one on every run. POST with a form
+    # body keeps the token out of the request URL (and out of any logged URL).
+    data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    response = requests.post(QT_TOKEN_URL, data=data)
     if response.status_code != 200:
         raise Exception(
             f"Questrade token refresh failed ({response.status_code}): {response.text}. "
@@ -64,11 +78,20 @@ def refresh_qt_access_token(refresh_token):
     return response.json()
 
 
-def fetch_qt_portfolio_accounts(access_token, url):
+def qt_endpoint(api_server, path):
+    # Questrade's api_server normally ends in "/", but some token responses include
+    # the "/v1" version segment. Normalize both so we never build ".../v1v1/...".
+    base = api_server.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[: -len("/v1")]
+    return f"{base}/v1/{path}"
+
+
+def fetch_qt_portfolio_accounts(access_token, api_server):
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
-    response = requests.get(f"{url}v1/accounts", headers=headers)
+    response = requests.get(qt_endpoint(api_server, "accounts"), headers=headers)
     return response.json()
 
 
@@ -134,9 +157,20 @@ def fetch_questrade_data():
         print("Refreshing Questrade access token...\n")
         token_data = refresh_qt_access_token(refresh_token)
 
-        # Persist the rotated refresh token immediately (before any API calls) so a
-        # later failure can't strand us with a spent token and force a new device.
-        save_qt_refresh_token(token_data["refresh_token"])
+        # Questrade rotated the refresh token (single-use), so persist the new one
+        # immediately, before any API calls. If saving fails, print it so the user
+        # can store it manually instead of being stranded with a spent token and
+        # forced to register a new device.
+        new_refresh_token = token_data["refresh_token"]
+        try:
+            save_qt_refresh_token(new_refresh_token)
+        except OSError as save_error:
+            print(
+                f"WARNING: could not save the rotated Questrade refresh token to "
+                f"{QT_REFRESH_TOKEN_PATH} ({save_error}).\n"
+                f"Save this value to that file manually or it will be lost and you'll "
+                f"need to generate a new token:\n\n    {new_refresh_token}\n"
+            )
 
         access_token = token_data["access_token"]
         qt_api_url = token_data["api_server"]
@@ -149,7 +183,7 @@ def fetch_questrade_data():
             headers = {
                 "Authorization": f"Bearer {access_token}"
             }
-            data = requests.get(f"{qt_api_url}v1/accounts/{account_number}/balances", headers=headers).json()
+            data = requests.get(qt_endpoint(qt_api_url, f"accounts/{account_number}/balances"), headers=headers).json()
             account_desc = 'QT ('+account['type']+')'
             for record in data['combinedBalances']:
                 if record['currency'] == 'CAD':
