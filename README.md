@@ -4,6 +4,7 @@ Python script that updates account balances utilizing APIs from various stock br
 # How To Run
 
 1. Clone this repository
+2. Copy `secrets.example.py` to `secrets.py` and fill in your own credentials. `secrets.py` is gitignored, so your credentials stay local. Each brokerage's required variables are listed in the sections below; optional settings (`ENABLE_WEALTHSIMPLE`, `QT_TOKEN_URL`, `QT_REFRESH_TOKEN_PATH`) are documented in `secrets.example.py`.
 
 
 ### Interactive Brokers API Setup
@@ -12,19 +13,19 @@ Python script that updates account balances utilizing APIs from various stock br
 - IBKR_CASH_ACCOUNT_ID
 - IBKR_RRSP_ACCOUNT_ID
 2. Download the [Interactive Brokers Client Portal Gateway](https://download2.interactivebrokers.com/portal/clientportal.gw.zip)
-3. Install Java [Java Download](https://www.java.com/download/ie_manual.jsp) 
-3. Extract the clientportal.gw.zip into the root of the UpdateBalanceSheet directory
-4. In the root of the UpdateBalanceSheet directory, create a python virtual environment venv and activate it
+3. Install Java [Java Download](https://www.java.com/download/ie_manual.jsp)
+4. Extract the clientportal.gw.zip into the root of the UpdateBalanceSheet directory
+5. In the root of the UpdateBalanceSheet directory, create a python virtual environment venv and activate it
 ```
 python -m venv venv
 .\venv\Scripts\activate.ps1
 pip install -r requirements.txt
 ```
-5. run the following command from the clientportal.gw inside prompt/terminal of your choice (CMD, PowerShell):
+6. run the following command from the clientportal.gw inside prompt/terminal of your choice (CMD, PowerShell):
 ```
 bin\run.bat root\conf.yaml
 ```
-6. Open https://localhost:5000 to login to your Interactive Brokers account Authorization the gateway proxy with your account credentials
+7. Open https://localhost:5000 to login to your Interactive Brokers account Authorization the gateway proxy with your account credentials
 
 
 ### Questrade API Setup
@@ -64,6 +65,16 @@ of registering a new one each run.
 Wealthsimple fetching is **enabled by default**. If you don't use Wealthsimple,
 set `ENABLE_WEALTHSIMPLE = False` in your `secrets.py` to skip it on that machine
 (no need to touch `main.py` or maintain a separate branch).
+
+### Running the script
+
+With the brokerage setup above complete:
+
+- **macOS:** run `./update_balance_sheet.sh` — it opens the IB Client Portal gateway in a new terminal, waits for you to log in at https://localhost:5001, then runs `main.py`.
+- **Windows:** run `UpdateBalanceSheet.bat` — it starts `main.py` and the IB Client Portal gateway in separate windows; log in to the gateway at https://localhost:5000 when it opens.
+- **Directly:** with the IB gateway already running and authenticated, run `python main.py`.
+
+On the **first** run, Questrade prompts you to paste a refresh token (see the Questrade section above); it is saved to `qt_refresh_token.txt` and reused automatically afterward.
 
 ### This is an example of the spreadsheet i'm updating with this script
 
