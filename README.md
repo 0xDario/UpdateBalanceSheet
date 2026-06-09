@@ -61,6 +61,10 @@ of registering a new one each run.
 - WEALTHIMSPLE_RRSP_ACCOUNT_ID
 - WEALTHIMSPLE_TFSA_ACCOUNT_ID
 
+Wealthsimple fetching is **enabled by default**. If you don't use Wealthsimple,
+set `ENABLE_WEALTHSIMPLE = False` in your `secrets.py` to skip it on that machine
+(no need to touch `main.py` or maintain a separate branch).
+
 ### This is an example of the spreadsheet i'm updating with this script
 
 - Column A is the Account_Name

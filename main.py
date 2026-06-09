@@ -36,6 +36,10 @@ QT_TOKEN_URL = getattr(
     secrets, "QT_TOKEN_URL", "https://login.questrade.com/oauth2/token"
 )
 
+# Wealthsimple fetching is on by default. Set ENABLE_WEALTHSIMPLE = False in
+# secrets.py to skip it on a specific machine (e.g. one without WS accounts).
+ENABLE_WEALTHSIMPLE = getattr(secrets, "ENABLE_WEALTHSIMPLE", True)
+
 
 def read_qt_refresh_token():
     try:
@@ -280,7 +284,10 @@ def main():
     try:
         fetch_questrade_data()
         fetch_interactive_brokers_data()
-        # fetch_wealthsimple_trade_data()
+        if ENABLE_WEALTHSIMPLE:
+            fetch_wealthsimple_trade_data()
+        else:
+            print("Wealthsimple fetching is disabled (ENABLE_WEALTHSIMPLE = False); skipping.\n")
         print("All account balances fetched and spreadsheet updated successfully!\n")
 
     except Exception as e:

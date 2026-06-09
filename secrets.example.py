@@ -4,6 +4,9 @@ WEALTHSIMPLE_USERNAME=''
 WEALTHSIMPLE_PASSWORD=''
 WEALTHIMSPLE_RRSP_ACCOUNT_ID=''
 WEALTHIMSPLE_TFSA_ACCOUNT_ID=''
+# Wealthsimple fetching is enabled by default. Uncomment the line below to skip
+# it on this machine (e.g. if you don't have Wealthsimple accounts configured).
+# ENABLE_WEALTHSIMPLE = False
 IBKR_TFSA_ACCOUNT_ID=''
 IBKR_CASH_ACCOUNT_ID=''
 IBKR_RRSP_ACCOUNT_ID=''
