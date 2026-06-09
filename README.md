@@ -68,13 +68,16 @@ set `ENABLE_WEALTHSIMPLE = False` in your `secrets.py` to skip it on that machin
 
 ### Running the script
 
-With the brokerage setup above complete:
+The portable way to run it on any OS:
 
-- **macOS:** run `./update_balance_sheet.sh` — it opens the IB Client Portal gateway in a new terminal, waits for you to log in at https://localhost:5001, then runs `main.py`.
-- **Windows:** run `UpdateBalanceSheet.bat` — it starts `main.py` and the IB Client Portal gateway in separate windows; log in to the gateway at https://localhost:5000 when it opens.
-- **Directly:** with the IB gateway already running and authenticated, run `python main.py`.
+1. Start the IB Client Portal gateway and **log in / authenticate** it (see the Interactive Brokers section). `main.py` calls IB immediately with no auth wait, so the gateway must be authenticated *before* you run the script, or it will error out.
+2. Activate your venv and run `python main.py`.
 
 On the **first** run, Questrade prompts you to paste a refresh token (see the Questrade section above); it is saved to `qt_refresh_token.txt` and reused automatically afterward.
+
+> The repo also ships the maintainer's personal launcher scripts. They **hard-code local paths** (repo location, gateway folder name, Windows username), so edit them to match your own environment before use:
+> - `update_balance_sheet.sh` (macOS): opens the gateway in a new terminal, waits for you to authenticate at https://localhost:5001, then runs `main.py`.
+> - `UpdateBalanceSheet.bat` (Windows): opens the gateway and `main.py` in separate windows. It does **not** wait for authentication, so make sure the gateway is logged in at https://localhost:5000 before `main.py` reaches it (simplest: just run `python main.py` yourself once the gateway is authenticated).
 
 ### This is an example of the spreadsheet i'm updating with this script
 
