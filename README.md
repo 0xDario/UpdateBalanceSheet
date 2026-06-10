@@ -66,6 +66,20 @@ Wealthsimple fetching is **enabled by default**. If you don't use Wealthsimple,
 set `ENABLE_WEALTHSIMPLE = False` in your `secrets.py` to skip it on that machine
 (no need to touch `main.py` or maintain a separate branch).
 
+### Spreadsheet Setup
+
+The script writes balances into an **existing** Excel workbook — set its path in `secrets.py` (these are required; with the empty example defaults the run fails when it tries to open the file):
+
+- `ACCOUNT_BALANCE_EXCEL_PATH_MACOS` — used on macOS
+- `ACCOUNT_BALANCE_EXCEL_PATH_WINDOWS` — used on Windows
+
+The workbook must contain a sheet named **`Balances`** with account names in **column A** (from row 2 down) that match the labels the script generates — e.g. `QT (TFSA)`, `IBKR (CASH)`, `IBKR (RRSP)`, `WST (TFSA)`. For each match it writes the balance, date, and time into the columns immediately to the right.
+
+- Column A is the Account_Name
+- Column B is the Account_Balance
+
+![image](https://github.com/0xDario/UpdateBalanceSheet/assets/61662791/b3522b87-e75b-45d6-a738-c4b4a288e667)
+
 ### Running the script
 
 The portable way to run it on any OS:
@@ -78,10 +92,3 @@ On the **first** run, Questrade prompts you to paste a refresh token (see the Qu
 > The repo also ships the maintainer's personal launcher scripts. They **hard-code local paths** (repo location, gateway folder name, Windows username), so edit them to match your own environment before use:
 > - `update_balance_sheet.sh` (macOS): opens the gateway in a new terminal, waits for you to authenticate at https://localhost:5001, then runs `main.py`.
 > - `UpdateBalanceSheet.bat` (Windows): opens the gateway and `main.py` in separate windows. It does **not** wait for authentication, so make sure the gateway is logged in at https://localhost:5000 before `main.py` reaches it (simplest: just run `python main.py` yourself once the gateway is authenticated).
-
-### This is an example of the spreadsheet i'm updating with this script
-
-- Column A is the Account_Name
-- Column B is the Account_Balance
-
-![image](https://github.com/0xDario/UpdateBalanceSheet/assets/61662791/b3522b87-e75b-45d6-a738-c4b4a288e667)
